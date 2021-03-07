@@ -7,7 +7,8 @@
 
 ### 第二章 統計表達 (Representation)
 
-&#160; 2.1章 信度與機率 (2.1 Degrees of Belief and Probability)
+2.1章 信度與機率 (2.1 Degrees of Belief and Probability)
+
 當所處理的問題具有不確定性時，比較不同的問題陳述以及所相關的可能性，是非常重要的方法。我們需要憑藉著可能性比較不同的陳述例如: 
 與陳述B比起來，陳述A具有較高的可能性。
 陳述A若為某敘述:「我的驅動器故障」，而陳述B為另一敘述:「我的感測器故障」。那麼基於可能能性分析的結論，我們就可以寫下一個描述可能性的表達式即:<br>
@@ -57,3 +58,35 @@ P(x) = ∑P(x, y)
 同理可證，推廣到n個變數(X1、X2、X3.....Xn)，若這n個變數彼此都獨立，則此n個變數的聯合機率分布為: P(X1:n)=∏i P(xi). <br>
 獨立(independent)變數的特性，使我們可以用n個參數形容n個變數的聯合機率分布，而非用(2^n-1)個參數。只有在變數彼此之間具有關聯性而不互相獨立，我們才需要使用到2^n-1 個參數來描述聯合機率分布。
 獨立性可以為我們的問題帶來驚人的簡化，但在處理實務問題時，我們必須很小心這個假設，因為它往往是錯的。
+
+
+```julia
+struct Variable
+     name::Symbol
+     m::Int # number of possible values
+end
+
+const Assignment = Dict{Symbol,Int}
+const FactorTable = Dict{Assignment,Float64}
+
+struct Factor
+     vars::Vector{Variable}
+      table::FactorTable
+end
+
+variablenames(ϕ::Factor) = [var.name for var in ϕ.vars]
+select(a::Assignment, varnames::Vector{Symbol}) = Assignment(n=>a[n] for n in varnames)
+
+function assignments(vars::AbstractVector{Variable})
+        names = [var.name for var in vars]
+        return vec([Assignment(n=>v for (n,v) in zip(names, values)) for values in product((1:v.m for v in vars)...)])
+end
+         
+function normalize!(ϕ::Factor)
+        z = sum(p for (a,p) in ϕ.table)
+           for (a,p) in ϕ.table
+              ϕ.table[a] = p/z
+           end
+   return ϕ
+end
+```
